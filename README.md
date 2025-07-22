@@ -45,7 +45,7 @@ MIT License
 
 ## お問い合わせ
 
-[t.ishii@aroka.net](mailto:t.ishii@aroka.net)
+[ti@aroka.net](mailto:ti@aroka.net)
 
 ---
 
@@ -96,4 +96,4 @@ MIT License
 
 ## Contact
 
-[t.ishii@aroka.net](mailto:t.ishii@aroka.net)
+[ti@aroka.net](mailto:ti@aroka.net)
