@@ -245,9 +245,13 @@ const downloadImagesIndividually = async () => {
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
             PDF → JPEG 変換ツール
           </h1>
+          <p className="text-gray-600 text-center mb-8">
+            PDFファイルを高品質なJPEG画像に変換します。<br />
+            プレゼンテーションや資料を簡単に画像として保存・共有できます。
+          </p>
 
           <div className="mb-8">
             <div
