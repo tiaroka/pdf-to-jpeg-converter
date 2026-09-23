@@ -4,7 +4,10 @@ import { Upload, Download, Loader2 } from 'lucide-react';
 // 一般公開のツールとしては対応範囲の広い legacy を選ぶ）
 import type { PDFDocumentLoadingTask } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import { FileValidationError, getErrorMessage } from './types/errors';
+import { ConversionError, getErrorMessage } from './types/errors';
+import { validateFile } from './lib/validate-file';
+import { describePdfError } from './lib/pdf-errors';
+import { clampScale } from './lib/canvas-limits';
 import { siteConfig } from '../site.config';
 
 type ConvertedImage = {
@@ -13,47 +16,12 @@ type ConvertedImage = {
   filename: string;
 };
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-
 // PDF.js は変換開始時に遅延ロードする（初回表示を軽くするため）。
 // 本体・worker ともにビルド成果物として同一オリジンから配信し、CDN には依存しない。
 const loadPdfJs = async () => {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   return pdfjs;
-};
-
-// PDF.js が投げる例外を利用者向けの文言に変換する
-const describePdfError = (err: unknown): string => {
-  const name = err instanceof Error ? err.name : '';
-  switch (name) {
-    case 'PasswordException':
-      return 'パスワード付きPDFには対応していません。保護を解除してからお試しください';
-    case 'InvalidPDFException':
-      return 'PDFファイルとして読み込めませんでした。ファイルが壊れていないか確認してください';
-    default:
-      return 'PDFの変換中にエラーが発生しました: ' + getErrorMessage(err);
-  }
-};
-
-const validateFile = (file: File): void => {
-  // ドラッグ＆ドロップでは MIME が空になる環境があるため、その場合のみ拡張子で補う
-  const isPdf =
-    file.type === 'application/pdf' || (file.type === '' && /\.pdf$/i.test(file.name));
-
-  if (!isPdf) {
-    throw new FileValidationError('PDFファイルのみ対応しています');
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw new FileValidationError(
-      `ファイルサイズが大きすぎます。${MAX_FILE_SIZE / (1024 * 1024)}MB以下にしてください`,
-    );
-  }
-
-  if (file.size === 0) {
-    throw new FileValidationError('空のファイルです');
-  }
 };
 
 const downloadBlob = (blob: Blob, filename: string) => {
@@ -178,6 +146,7 @@ const PDFToJPEGConverter = () => {
   const [images, setImages] = useState<ConvertedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [quality, setQuality] = useState(0.92);
   const [scale, setScale] = useState(2);
   const [isDragging, setIsDragging] = useState(false);
@@ -205,9 +174,11 @@ const PDFToJPEGConverter = () => {
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    // 子要素（アイコンや文字）の上へ移っただけなら「離れた」扱いにしない（枠の点滅防止）
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
     setIsDragging(false);
   };
 
@@ -227,6 +198,7 @@ const PDFToJPEGConverter = () => {
 
     setLoading(true);
     setError('');
+    setNotice('');
     setImages([]);
 
     let loadingTask: PDFDocumentLoadingTask | null = null;
@@ -239,10 +211,14 @@ const PDFToJPEGConverter = () => {
       const pdf = await loadingTask.promise;
 
       const converted: ConvertedImage[] = [];
+      let minEffectiveScale = scale;
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale });
+        // 大判ページで canvas の上限を超えないよう、倍率をページごとに丸める
+        const effectiveScale = clampScale(page.getViewport({ scale: 1 }), scale);
+        minEffectiveScale = Math.min(minEffectiveScale, effectiveScale);
+        const viewport = page.getViewport({ scale: effectiveScale });
 
         const canvas = document.createElement('canvas');
         canvas.width = Math.floor(viewport.width);
@@ -256,7 +232,11 @@ const PDFToJPEGConverter = () => {
               if (result) {
                 resolve(result);
               } else {
-                reject(new Error('Failed to create blob from canvas'));
+                reject(
+                  new ConversionError(
+                    'ページが大きすぎて画像を生成できませんでした。解像度倍率を下げてお試しください',
+                  ),
+                );
               }
             },
             'image/jpeg',
@@ -277,7 +257,13 @@ const PDFToJPEGConverter = () => {
       }
 
       setImages(converted);
+      setNotice(
+        minEffectiveScale < scale
+          ? `一部のページが大きいため、解像度倍率を ${minEffectiveScale.toFixed(2)}x に自動で下げました`
+          : '',
+      );
     } catch (err) {
+      console.error('PDF変換エラー:', err);
       setError(describePdfError(err));
     } finally {
       // worker 側のドキュメントとメモリを解放する
@@ -333,6 +319,7 @@ const PDFToJPEGConverter = () => {
     setPdfFile(null);
     setImages([]);
     setError('');
+    setNotice('');
     // 同じファイルを再選択したときにも change イベントが発火するようにする
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -437,6 +424,11 @@ const PDFToJPEGConverter = () => {
 
           {images.length > 0 && (
             <div>
+              {notice && (
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-sm">{notice}</p>
+                </div>
+              )}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">
                   変換完了: {images.length}枚のスライド

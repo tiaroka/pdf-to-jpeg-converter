@@ -10,7 +10,7 @@
 // 別のホスティングで公開する場合は本文も見直すこと。
 
 export type SiteConfig = {
-  /** 公開 URL。末尾スラッシュ付き。canonical / OG / sitemap / robots に使う */
+  /** 公開 URL（末尾スラッシュは有無どちらでもよい）。canonical / OG / sitemap / robots に使う */
   siteUrl: string;
   /** 運営者表記（フッター・ポリシー）。空文字なら表示しない */
   operator: string;
@@ -20,7 +20,7 @@ export type SiteConfig = {
   repoUrl: string;
   /** フッター下段に並べる関連サイト。空配列なら出さない */
   relatedLinks: Array<{ label: string; url: string }>;
-  /** プライバシーポリシー・利用規約の制定日（表示用） */
+  /** プライバシーポリシー・利用規約の制定日（YYYY-MM-DD）。表示は「YYYY年M月D日」に整形される */
   policyDate: string;
 };
 
@@ -35,5 +35,5 @@ export const siteConfig: SiteConfig = {
     { label: 'ブログ', url: 'https://blog.aroka.net/' },
     { label: '長い長いノート', url: 'https://longlongnote.aroka.net/' },
   ],
-  policyDate: '2026年9月23日',
+  policyDate: '2026-09-23',
 };

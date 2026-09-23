@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npm test && npm run build
 
 # 配信ステージ: 非 root ユーザーで 8080 を listen する公式イメージ
 FROM nginxinc/nginx-unprivileged:stable-alpine
