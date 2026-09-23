@@ -77,7 +77,7 @@ const ImagePreview = ({
         <span className="text-sm text-gray-600">スライド{image.pageNumber}</span>
         <button
           onClick={() => onDownload(image)}
-          className="bg-blue-600 text-white py-1px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
+          className="bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
         >
           <Download className="w-3 h-3" aria-hidden="true" />
           保存
@@ -184,33 +184,36 @@ const PDFToJPEGConverter = () => {
         canvas.width = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
 
-        const renderTask = page.render({ canvas, viewport });
-        renderTaskRef.current = renderTask;
-        await renderTask.promise;
-        renderTaskRef.current = null;
+        let blob: Blob;
+        try {
+          const renderTask = page.render({ canvas, viewport });
+          renderTaskRef.current = renderTask;
+          await renderTask.promise;
+          renderTaskRef.current = null;
 
-        const blob = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob(
-            (result) => {
-              if (result) {
-                resolve(result);
-              } else {
-                reject(
-                  new ConversionError(
-                    'ページが大きすぎて画像を生成できませんでした。解像度倍率を下げてお試しください',
-                  ),
-                );
-              }
-            },
-            'image/jpeg',
-            quality,
-          );
-        });
-
-        // 使い終わったページとキャンバスのメモリを解放する
-        page.cleanup();
-        canvas.width = 0;
-        canvas.height = 0;
+          blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+              (result) => {
+                if (result) {
+                  resolve(result);
+                } else {
+                  reject(
+                    new ConversionError(
+                      'ページが大きすぎて画像を生成できませんでした。解像度倍率を下げてお試しください',
+                    ),
+                  );
+                }
+              },
+              'image/jpeg',
+              quality,
+            );
+          });
+        } finally {
+          // toBlob が失敗したときも、ページとキャンバスのメモリは必ず解放する
+          page.cleanup();
+          canvas.width = 0;
+          canvas.height = 0;
+        }
 
         converted.push({
           pageNumber: pageNum,
@@ -375,7 +378,7 @@ const PDFToJPEGConverter = () => {
         {phase.kind === 'selected' && (
           <button
             onClick={convertPDFToImages}
-            className="w-full bg-blue-600 text-white py-3px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             JPEG画像に変換
           </button>
@@ -409,7 +412,7 @@ const PDFToJPEGConverter = () => {
             )}
             <button
               onClick={cancelConversion}
-              className="bg-gray-200 text-gray-700 py-2px-6 rounded-lg hover:bg-gray-300 transition-colors"
+              className="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors"
             >
               キャンセル
             </button>
@@ -430,7 +433,7 @@ const PDFToJPEGConverter = () => {
               <button
                 onClick={handleDownloadAll}
                 disabled={zipping}
-                className="bg-green-600 text-white py-2px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait"
+                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait"
               >
                 <Download className="w-4 h-4" aria-hidden="true" />
                 {zipping ? 'ZIPを作成中...' : 'すべてダウンロード（ZIP）'}
@@ -449,7 +452,7 @@ const PDFToJPEGConverter = () => {
 
             <button
               onClick={resetAll}
-              className="w-full mt-6 bg-gray-600 text-white py-2px-4 rounded-lg hover:bg-gray-700 transition-colors"
+              className="w-full mt-6 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
             >
               新しいPDFを変換
             </button>
