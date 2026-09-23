@@ -1,95 +1,85 @@
 # Cloud Run デプロイ手順
 
 ## 前提条件
-- Google Cloud アカウント
+
+- Google Cloud アカウントとプロジェクト
 - gcloud CLI がインストール済み
-- Docker がインストール済み（オプション）
+- Docker がインストール済み（ローカルで動作確認する場合）
 
-## デプロイ手順
+サービス名・リージョン・レジストリは `cloudbuild.yaml` の `substitutions` に集約しています。
 
-### 1. Google Cloud プロジェクトの設定
+| 項目 | 値 |
+|---|---|
+| サービス名 | `pdf-to-jpeg-react` |
+| リージョン | `asia-northeast1` |
+| Artifact Registry リポジトリ | `cloud-run-source-deploy` |
+| カスタムドメイン | `pdf2jpeg.aroka.net` |
+
+## 初回セットアップ
 
 ```bash
-# プロジェクトIDを設定（your-project-idを実際のプロジェクトIDに置き換え）
 export PROJECT_ID=your-project-id
-
-# プロジェクトを設定
 gcloud config set project $PROJECT_ID
 
-# 必要なAPIを有効化
-gcloud services enable cloudbuild.googleapis.com
-gcloud services enable run.googleapis.com
-gcloud services enable artifactregistry.googleapis.com
-```
+# 必要な API を有効化
+gcloud services enable cloudbuild.googleapis.com run.googleapis.com artifactregistry.googleapis.com
 
-### 2. Cloud Build を使用してデプロイ（推奨）
-
-```bash
-# Cloud Build を使用してビルドとデプロイを実行
-gcloud run deploy pdf-to-jpeg-converter \
-  --source . \
-  --region asia-northeast1 \
-  --allow-unauthenticated \
-  --port 8080 \
-  --memory 512Mi \
-  --cpu 1
-```
-
-### 3. ローカルでビルドしてデプロイ（オプション）
-
-```bash
-# Artifact Registry にリポジトリを作成（初回のみ）
+# Artifact Registry のリポジトリを作成（初回のみ）
 gcloud artifacts repositories create cloud-run-source-deploy \
   --repository-format=docker \
   --location=asia-northeast1
+```
 
-# Docker イメージをビルド
-docker build -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/pdf-to-jpeg-converter:latest .
+## デプロイ（Cloud Build）
 
-# Docker イメージをプッシュ
-docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/pdf-to-jpeg-converter:latest
+```bash
+# コミットハッシュをイメージタグにしてビルド・push・デプロイ
+gcloud builds submit --config cloudbuild.yaml \
+  --substitutions=_TAG=$(git rev-parse --short HEAD) .
+```
 
-# Cloud Run にデプロイ
-gcloud run deploy pdf-to-jpeg-converter \
-  --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/pdf-to-jpeg-converter:latest \
-  --region asia-northeast1 \
-  --allow-unauthenticated \
-  --port 8080 \
-  --memory 512Mi \
-  --cpu 1
+`--allow-unauthenticated` の自動適用が組織ポリシーで失敗した場合は、明示的に付与する:
+
+```bash
+gcloud run services add-iam-policy-binding pdf-to-jpeg-react \
+  --region=asia-northeast1 \
+  --member=allUsers \
+  --role=roles/run.invoker
+```
+
+## ローカルでの動作確認（Docker）
+
+本番と同じ nginx 設定（セキュリティヘッダー・CSP を含む）で確認できます。
+
+```bash
+docker build -t pdf-to-jpeg-react .
+docker run --rm -p 8080:8080 pdf-to-jpeg-react
+# http://localhost:8080/ を開く。ヘッダー確認: curl -I http://localhost:8080/
 ```
 
 ## デプロイ後の確認
 
-デプロイが完了すると、サービスのURLが表示されます：
-```
-Service URL: https://pdf-to-jpeg-converter-xxxxxxxxxx-an.a.run.app
+```bash
+# セキュリティヘッダーが付いているか
+curl -sI https://pdf2jpeg.aroka.net/ | grep -i -E "content-security-policy|strict-transport|x-content-type|x-frame"
+
+# robots.txt / sitemap.xml が本物のファイルとして返るか（SPA にフォールバックしていないか）
+curl -s https://pdf2jpeg.aroka.net/robots.txt
 ```
 
-このURLにアクセスして、アプリケーションが正常に動作していることを確認してください。
-
-## カスタムドメインの設定（オプション）
+## カスタムドメインの設定
 
 ```bash
-# ドメインマッピングを作成
-gcloud run domain-mappings create \
-  --service pdf-to-jpeg-converter \
-  --domain your-domain.com \
+gcloud beta run domain-mappings create \
+  --service pdf-to-jpeg-react \
+  --domain pdf2jpeg.aroka.net \
   --region asia-northeast1
 ```
 
-## 更新のデプロイ
-
-コードを更新した後、以下のコマンドで再デプロイできます：
-
-```bash
-gcloud run deploy pdf-to-jpeg-converter \
-  --source . \
-  --region asia-northeast1
-```
+DNS には `pdf2jpeg` の CNAME を `ghs.googlehosted.com` に向ける。別プロジェクトで同じドメインがマッピング済みの場合は、既存マッピングを削除してから `--force-override` 付きで再作成する。
 
 ## トラブルシューティング
 
-1. **ビルドエラー**: `package-lock.json` が存在することを確認
-2. **メモリ不足**: メモリを 1GB に増やす: `--memory 1Gi`
-3. **タイムアウト**: タイムアウトを延長: `--timeout 300`
+1. **ビルドエラー**: `package-lock.json` が存在し、Dockerfile の Node バージョン（22）が Vite の要件を満たしていることを確認
+2. **メモリ不足**: `cloudbuild.yaml` の `--memory` を `1Gi` に増やす
+3. **404 が返る静的ファイル**: `public/` に置いたファイルは `dist/` 直下にコピーされる。nginx は拡張子付きの未知のパスを 404 にする設定（`nginx.conf`）

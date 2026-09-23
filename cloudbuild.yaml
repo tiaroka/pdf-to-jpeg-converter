@@ -1,25 +1,59 @@
+# Cloud Build で Docker イメージをビルドし、Artifact Registry へ push して Cloud Run にデプロイする。
+#
+# 手動実行（コミットハッシュをタグにする）:
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_TAG=$(git rev-parse --short HEAD) .
+#
+# 事前に Artifact Registry のリポジトリが必要（初回のみ）:
+#   gcloud artifacts repositories create cloud-run-source-deploy \
+#     --repository-format=docker --location=asia-northeast1
+
+substitutions:
+  _REGION: asia-northeast1
+  _REPO: cloud-run-source-deploy
+  _SERVICE: pdf-to-jpeg-react
+  _TAG: latest
+
 steps:
-  # Build the Docker image
+  # Docker イメージをビルド（タグ指定＋latest の2つを付ける）
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/pdf-to-jpeg-react', '.']
-  
-  # Push the Docker image to Container Registry
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:${_TAG}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest'
+      - '.'
+
+  # Artifact Registry へ push
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/pdf-to-jpeg-react']
-  
-  # Deploy to Cloud Run
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}'
+
+  # Cloud Run にデプロイ（タグ指定のイメージを使う）
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
-      - 'pdf-to-jpeg-react'
+      - '${_SERVICE}'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/pdf-to-jpeg-react'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:${_TAG}'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'asia-northeast1'
+      - '${_REGION}'
       - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '3'
 
 images:
-  - 'gcr.io/$PROJECT_ID/pdf-to-jpeg-react'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:${_TAG}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest'

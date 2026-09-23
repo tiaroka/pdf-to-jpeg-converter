@@ -1,0 +1,101 @@
+/* プライバシーポリシー・利用規約などの静的ページ用スタイル
+   （CSP で inline style を禁止しているため外部ファイルにする） */
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f3f4f6;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Hiragino Sans',
+    'Yu Gothic UI', 'Meiryo', 'Helvetica Neue', sans-serif;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 48rem;
+  margin: 2rem auto;
+  padding: 2.5rem 2rem;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+  color: #111827;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 2rem 0 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin: 1.25rem 0 0.25rem;
+  color: #1f2937;
+}
+
+p,
+li {
+  color: #374151;
+}
+
+ul {
+  padding-left: 1.5rem;
+}
+
+a {
+  color: #2563eb;
+}
+
+a:hover {
+  color: #1d4ed8;
+}
+
+.meta {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+footer {
+  max-width: 48rem;
+  margin: 0 auto 2rem;
+  padding: 0 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+footer nav a {
+  margin: 0 0.5rem;
+  color: #6b7280;
+}
+
+footer nav a:hover {
+  color: #374151;
+}
+
+@media (max-width: 640px) {
+  main {
+    margin: 1rem;
+    padding: 1.5rem 1.25rem;
+  }
+}

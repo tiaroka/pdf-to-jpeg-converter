@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 作業日誌・ログ（バージョン管理対象外）
+documents/

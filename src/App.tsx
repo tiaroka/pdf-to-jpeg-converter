@@ -1,15 +1,181 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Upload, Download, Loader2 } from 'lucide-react';
+// legacy ビルドを使う（modern ビルドは最新ブラウザ専用の構文・API に依存するため、
+// 一般公開のツールとしては対応範囲の広い legacy を選ぶ）
+import type { PDFDocumentLoadingTask } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { FileValidationError, getErrorMessage } from './types/errors';
-import './App.css';
+import { siteConfig } from '../site.config';
+
+type ConvertedImage = {
+  pageNumber: number;
+  blob: Blob;
+  filename: string;
+};
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+// PDF.js は変換開始時に遅延ロードする（初回表示を軽くするため）。
+// 本体・worker ともにビルド成果物として同一オリジンから配信し、CDN には依存しない。
+const loadPdfJs = async () => {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  return pdfjs;
+};
+
+// PDF.js が投げる例外を利用者向けの文言に変換する
+const describePdfError = (err: unknown): string => {
+  const name = err instanceof Error ? err.name : '';
+  switch (name) {
+    case 'PasswordException':
+      return 'パスワード付きPDFには対応していません。保護を解除してからお試しください';
+    case 'InvalidPDFException':
+      return 'PDFファイルとして読み込めませんでした。ファイルが壊れていないか確認してください';
+    default:
+      return 'PDFの変換中にエラーが発生しました: ' + getErrorMessage(err);
+  }
+};
+
+const validateFile = (file: File): void => {
+  // ドラッグ＆ドロップでは MIME が空になる環境があるため、その場合のみ拡張子で補う
+  const isPdf =
+    file.type === 'application/pdf' || (file.type === '' && /\.pdf$/i.test(file.name));
+
+  if (!isPdf) {
+    throw new FileValidationError('PDFファイルのみ対応しています');
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    throw new FileValidationError(
+      `ファイルサイズが大きすぎます。${MAX_FILE_SIZE / (1024 * 1024)}MB以下にしてください`,
+    );
+  }
+
+  if (file.size === 0) {
+    throw new FileValidationError('空のファイルです');
+  }
+};
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+};
+
+// 親コンポーネントの外で定義する（内側に置くと親の再レンダーごとに再マウントされ、
+// Blob URL を作り直してしまう）
+const ImagePreview = ({
+  image,
+  onDownload,
+}: {
+  image: ConvertedImage;
+  onDownload: (image: ConvertedImage) => void;
+}) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(image.blob);
+    setBlobUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image.blob]);
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+      {blobUrl && (
+        <img src={blobUrl} alt={`スライド ${image.pageNumber}`} className="w-full h-auto" />
+      )}
+      <div className="p-3 bg-gray-50 flex justify-between items-center">
+        <span className="text-sm text-gray-600">スライド {image.pageNumber}</span>
+        <button
+          onClick={() => onDownload(image)}
+          className="bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
+        >
+          <Download className="w-3 h-3" />
+          保存
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const Footer = () => {
+  // 運営者名と関連サイトを「·」区切りで並べる（未設定の項目は出さない）
+  const credits: React.ReactNode[] = [];
+  if (siteConfig.operator) {
+    credits.push(<span key="operator">運営: {siteConfig.operator}</span>);
+  }
+  for (const link of siteConfig.relatedLinks) {
+    credits.push(
+      <a
+        key={link.url}
+        href={link.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:text-gray-600 hover:underline"
+      >
+        {link.label}
+      </a>,
+    );
+  }
+
+  return (
+    <footer className="mt-8 text-center text-sm text-gray-500 space-y-2">
+      <p>PDFファイルはお使いのブラウザ内で処理され、サーバーには送信されません。</p>
+      <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+        <a href="/privacy" className="underline hover:text-gray-700">
+          プライバシーポリシー
+        </a>
+        <a href="/terms" className="underline hover:text-gray-700">
+          利用規約
+        </a>
+        {siteConfig.contactFormUrl && (
+          <a
+            href={siteConfig.contactFormUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-700"
+          >
+            お問い合わせ
+          </a>
+        )}
+        {siteConfig.repoUrl && (
+          <a
+            href={siteConfig.repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-700"
+          >
+            GitHub
+          </a>
+        )}
+      </nav>
+      {credits.length > 0 && (
+        <p className="text-xs text-gray-400">
+          {credits.map((node, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span className="mx-1">·</span>}
+              {node}
+            </React.Fragment>
+          ))}
+        </p>
+      )}
+    </footer>
+  );
+};
 
 const PDFToJPEGConverter = () => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [images, setImages] = useState<Array<{
-    pageNumber: number;
-    blob: Blob;
-    filename: string;
-  }>>([]);
+  const [images, setImages] = useState<ConvertedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [quality, setQuality] = useState(0.92);
@@ -17,31 +183,14 @@ const PDFToJPEGConverter = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): void => {
-    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-    const ALLOWED_TYPES = ['application/pdf'];
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      throw new FileValidationError('PDFファイルのみ対応しています');
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      throw new FileValidationError(`ファイルサイズが大きすぎます。${MAX_FILE_SIZE / (1024 * 1024)}MB以下にしてください`);
-    }
-
-    if (file.size === 0) {
-      throw new FileValidationError('空のファイルです');
-    }
-  };
-
   const handleFileSelect = (file: File) => {
     try {
       validateFile(file);
       setPdfFile(file);
       setError('');
       setImages([]);
-    } catch (error) {
-      setError(getErrorMessage(error));
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -66,7 +215,7 @@ const PDFToJPEGConverter = () => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file) {
       handleFileSelect(file);
@@ -80,165 +229,112 @@ const PDFToJPEGConverter = () => {
     setError('');
     setImages([]);
 
+    let loadingTask: PDFDocumentLoadingTask | null = null;
+
     try {
-      // PDF.jsライブラリを確実に読み込む
-      await loadPDFJS();
-      
-      if (!window.pdfjsLib) {
-        throw new Error('PDF.js library not loaded. Please refresh the page and try again.');
-      }
-      
-      const pdfjsLib = window.pdfjsLib;
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument(arrayBuffer);
+      const pdfjs = await loadPdfJs();
+      // data は worker に転送されるため、以降は再利用しない
+      const data = new Uint8Array(await pdfFile.arrayBuffer());
+      loadingTask = pdfjs.getDocument({ data });
       const pdf = await loadingTask.promise;
-      
-      const totalPages = pdf.numPages;
-      const convertedImages = [];
-      
-      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: scale });
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d', { willReadFrequently: true });
-        if (!context) throw new Error('Canvas context not available');
-        
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
 
-        await page.render({
-          canvasContext: context,
-          viewport: viewport
-        }).promise;
+      const converted: ConvertedImage[] = [];
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        await page.render({ canvas, viewport }).promise;
 
         const blob = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to create blob from canvas'));
-          }
-        }, 'image/jpeg', quality);
+          canvas.toBlob(
+            (result) => {
+              if (result) {
+                resolve(result);
+              } else {
+                reject(new Error('Failed to create blob from canvas'));
+              }
+            },
+            'image/jpeg',
+            quality,
+          );
         });
-        
-        convertedImages.push({
+
+        // 使い終わったページとキャンバスのメモリを解放する
+        page.cleanup();
+        canvas.width = 0;
+        canvas.height = 0;
+
+        converted.push({
           pageNumber: pageNum,
-          blob: blob,
-          filename: `slide_${String(pageNum).padStart(3, '0')}.jpg`
+          blob,
+          filename: `slide_${String(pageNum).padStart(3, '0')}.jpg`,
         });
       }
 
-      setImages(convertedImages);
+      setImages(converted);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError('PDFの変換中にエラーが発生しました: ' + errorMessage);
+      setError(describePdfError(err));
     } finally {
+      // worker 側のドキュメントとメモリを解放する
+      if (loadingTask) {
+        await loadingTask.destroy().catch(() => undefined);
+      }
       setLoading(false);
     }
   };
 
-  const downloadImage = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = filename;
-    
-    document.body.appendChild(a);
-    a.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
+  const handleDownloadImage = (image: ConvertedImage) => {
+    downloadBlob(image.blob, image.filename);
   };
 
-  const handleDownloadImage = (image: typeof images[0]) => {
-    downloadImage(image.blob, image.filename);
+  const downloadImagesIndividually = async () => {
+    for (const image of images) {
+      downloadBlob(image.blob, image.filename);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
   };
 
-const handleDownloadAll = async () => {
-  if (images.length > 10) {
-    const confirmed = window.confirm(`${images.length}枚の画像をダウンロードします。続行しますか？`);
+  const handleDownloadAll = async () => {
+    if (images.length <= 10) {
+      // 10枚以下の場合は個別にダウンロード
+      await downloadImagesIndividually();
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `${images.length}枚の画像をダウンロードします。続行しますか？`,
+    );
     if (!confirmed) return;
-    
+
     try {
-      // JSZipライブラリを動的に読み込み
-      if (!window.JSZip) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-          script.crossOrigin = 'anonymous';
-          script.referrerPolicy = 'no-referrer';
-          script.onload = resolve;
-          script.onerror = () => reject(new Error('Failed to load JSZip library'));
-          document.head.appendChild(script);
-        });
-      }
-      
-      if (!window.JSZip) {
-        throw new Error('JSZip library not loaded');
-      }
-      
-      const zip = new window.JSZip();
-      
-      // すべての画像をZIPに追加
+      // JSZip はビルド成果物として同梱し、必要になった時点で読み込む
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+
       for (const image of images) {
         zip.file(image.filename, image.blob);
       }
-      
-      // ZIPファイルを生成
+
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      downloadImage(zipBlob, 'pdf_slides.zip');
-      
-    } catch (error) {
-      console.error('ZIP作成エラー:', error);
+      downloadBlob(zipBlob, 'pdf_slides.zip');
+    } catch (err) {
+      console.error('ZIP作成エラー:', err);
       alert('ZIPファイルの作成に失敗しました。個別にダウンロードします。');
-      // 個別ダウンロードにフォールバック
       await downloadImagesIndividually();
     }
-  } else {
-    // 10枚以下の場合は個別にダウンロード
-    await downloadImagesIndividually();
-  }
-};
+  };
 
-const downloadImagesIndividually = async () => {
-  for (let i = 0; i < images.length; i++) {
-    downloadImage(images[i].blob, images[i].filename);
-    await new Promise(resolve => setTimeout(resolve, 300));
-  }
-};
-
-  const ImagePreview = ({ image }: { image: typeof images[0] }) => {
-    const [blobUrl, setBlobUrl] = useState<string | null>(null);
-    
-    React.useEffect(() => {
-      const url = URL.createObjectURL(image.blob);
-      setBlobUrl(url);
-      return () => URL.revokeObjectURL(url);
-    }, [image.blob]);
-    
-    return (
-      <div className="border rounded-lg overflow-hidden shadow-sm">
-        {blobUrl && (
-          <img src={blobUrl} alt={`Slide ${image.pageNumber}`} className="w-full h-auto" />
-        )}
-        <div className="p-3 bg-gray-50 flex justify-between items-center">
-          <span className="text-sm text-gray-600">スライド {image.pageNumber}</span>
-          <button
-            onClick={() => handleDownloadImage(image)}
-            className="bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
-          >
-            <Download className="w-3 h-3" />
-            保存
-          </button>
-        </div>
-      </div>
-    );
+  const resetAll = () => {
+    setPdfFile(null);
+    setImages([]);
+    setError('');
+    // 同じファイルを再選択したときにも change イベントが発火するようにする
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
@@ -269,13 +365,13 @@ const downloadImagesIndividually = async () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,application/pdf"
                 onChange={handleFileChange}
                 className="hidden"
               />
             </div>
             {pdfFile && (
-              <p className="mt-4 text-sm text-gray-600">
+              <p className="mt-4 text-sm text-gray-600 text-center">
                 選択されたファイル: {pdfFile.name}
               </p>
             )}
@@ -356,15 +452,16 @@ const downloadImagesIndividually = async () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {images.map((image) => (
-                  <ImagePreview key={image.pageNumber} image={image} />
+                  <ImagePreview
+                    key={image.pageNumber}
+                    image={image}
+                    onDownload={handleDownloadImage}
+                  />
                 ))}
               </div>
 
               <button
-                onClick={() => {
-                  setPdfFile(null);
-                  setImages([]);
-                }}
+                onClick={resetAll}
                 className="w-full mt-6 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
               >
                 新しいPDFを変換
@@ -372,27 +469,11 @@ const downloadImagesIndividually = async () => {
             </div>
           )}
         </div>
+
+        <Footer />
       </div>
     </div>
   );
-};
-
-// PDF.jsライブラリの読み込みをPromiseベースに変更
-const loadPDFJS = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if (window.pdfjsLib) {
-      resolve();
-      return;
-    }
-    
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    script.crossOrigin = 'anonymous';
-    script.referrerPolicy = 'no-referrer';
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load PDF.js'));
-    document.head.appendChild(script);
-  });
 };
 
 function App() {

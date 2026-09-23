@@ -1,12 +1,49 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="無料のPDF to JPEG変換ツール。PDFファイルを高品質なJPEG画像に簡単変換。プレゼンテーションや資料の画像化に最適。ドラッグ&ドロップ対応。" />
-    <meta name="keywords" content="PDF変換, JPEG変換, PDF to JPEG, 画像変換, オンラインツール, 無料" />
-    <title>PDF to JPEG Converter</title>
+    <title>PDF to JPEG 変換ツール | 無料・ブラウザ内で完結</title>
+    <meta name="description" content="PDFをJPEG画像に変換する無料のオンラインツール。処理はすべてブラウザ内で行われ、PDFファイルはサーバーに送信されません。ドラッグ＆ドロップ対応、画質と解像度を指定して一括ダウンロードできます。" />
+    <link rel="canonical" href="{{SITE_URL}}" />
+    <meta name="theme-color" content="#2563eb" />
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PDF to JPEG 変換ツール" />
+    <meta property="og:title" content="PDF to JPEG 変換ツール | 無料・ブラウザ内で完結" />
+    <meta property="og:description" content="PDFをJPEG画像に変換する無料のオンラインツール。処理はすべてブラウザ内で行われ、PDFファイルはサーバーに送信されません。" />
+    <meta property="og:url" content="{{SITE_URL}}" />
+    <meta property="og:image" content="{{SITE_URL}}og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PDF to JPEG 変換ツール | 無料・ブラウザ内で完結" />
+    <meta name="twitter:description" content="PDFをJPEG画像に変換する無料のオンラインツール。処理はすべてブラウザ内で行われ、PDFファイルはサーバーに送信されません。" />
+    <meta name="twitter:image" content="{{SITE_URL}}og.png" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "PDF to JPEG 変換ツール",
+      "url": "{{SITE_URL}}",
+      "description": "PDFをJPEG画像に変換する無料のオンラインツール。処理はすべてブラウザ内で行われ、PDFファイルはサーバーに送信されません。",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": "ja",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+      {{JSON_LD_AUTHOR}}
+      "license": "https://opensource.org/licenses/MIT"
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

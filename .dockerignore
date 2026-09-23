@@ -1,8 +1,14 @@
 node_modules
+dist
+dist-ssr
 npm-debug.log
 .git
 .gitignore
+.github
+.claude
+documents
 README.md
+CLOUD_RUN_DEPLOY.md
 .env
 .nyc_output
 coverage

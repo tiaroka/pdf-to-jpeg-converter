@@ -1,41 +1,42 @@
 # PDF to JPEG 変換ツール
 
-シンプルで高性能なPDFからJPEG画像への変換ツールです。
+ブラウザ内で完結する、シンプルなPDF→JPEG画像変換ツールです。
+
+- ライブデモ: [https://pdf2jpeg.aroka.net](https://pdf2jpeg.aroka.net)
+- [プライバシーポリシー](https://pdf2jpeg.aroka.net/privacy) / [利用規約](https://pdf2jpeg.aroka.net/terms)
 
 ## 機能
 
-- 📄 PDF を JPEG 画像に変換
-- 🔒 **完全プライベート**: データはサーバーに送信されません
+- 📄 PDF の各ページを JPEG 画像に変換
+- 🔒 PDF ファイルはブラウザ内で処理され、サーバーには送信されない
 - 🖱️ ドラッグ&ドロップ対応
-- 📁 個別・一括ダウンロード
-- ⚙️ 品質・サイズ設定
+- 📁 個別ダウンロード・ZIP 一括ダウンロード
+- ⚙️ 画質・解像度倍率の設定
 - 📱 スマホ対応
-
-## ライブデモ
-
-- [https://pdf2jpeg.aroka.net](https://pdf2jpeg.aroka.net)
 
 ## 使い方
 
-1. PDFファイルを選択またはドラッグ&ドロップ
-2. 品質とサイズを設定（必要に応じて）
-3. 「変換」ボタンをクリック
+1. PDF ファイルを選択またはドラッグ&ドロップ
+2. 画質と解像度を設定（必要に応じて）
+3. 「JPEG画像に変換」ボタンをクリック
 4. 変換された画像をダウンロード
 
 ## プライバシー・セキュリティ
 
-- 🔒 **完全クライアントサイド処理**: PDFファイルはサーバーに送信されません
-- 💾 **データ保存なし**: すべての処理がブラウザ内で完結
-- 🛡️ **機密文書も安全**: データ漏洩リスクゼロ
-- 🌐 **オフライン動作可能**: 初回読み込み後はネットワーク不要
+- **PDF はアップロードされません**: 変換処理はすべてブラウザ内（PDF.js）で実行され、PDF ファイルや変換結果がアプリのサーバーへ送られるコードはありません
+- **第三者への通信なし**: PDF.js、JSZip などのライブラリはすべてビルドに同梱し、同一オリジンから配信しています（CDN への実行時通信はありません）
+- **アクセスログ**: Cloud Run が IP アドレス・日時・URL・User-Agent などのアクセスログを記録します。詳細は[プライバシーポリシー](https://pdf2jpeg.aroka.net/privacy)を参照してください
+- **Cookie・アクセス解析なし**
+- **セキュリティヘッダー**: CSP、X-Content-Type-Options、X-Frame-Options、Referrer-Policy、HSTS などを nginx で付与しています（`security-headers.conf`）
 
 ## 技術仕様
 
-- **フロントエンド**: React + TypeScript
-- **PDF処理**: PDF.js（ブラウザ内で実行）
-- **デプロイ**: Google Cloud Run（静的ファイル配信のみ）
+- **フロントエンド**: React 19 + TypeScript + Vite 7 + Tailwind CSS 4
+- **PDF 処理**: [PDF.js](https://mozilla.github.io/pdf.js/)（pdfjs-dist、ブラウザ内で実行）
+- **ZIP 生成**: JSZip
+- **配信**: Google Cloud Run 上の nginx（静的ファイル配信のみ）
 - **最大ファイルサイズ**: 100MB
-- **対応ブラウザ**: Chrome, Firefox, Safari, Edge
+- **対応ブラウザ**: Chrome, Firefox, Safari, Edge の最新版
 
 ## ローカル開発
 
@@ -45,7 +46,25 @@ npm install
 
 # 開発サーバー起動
 npm run dev
+
+# lint / 本番ビルド / ビルド結果のプレビュー
+npm run lint
+npm run build
+npm run preview
 ```
+
+Node.js 22 以上が必要です。
+
+## フォークして使う場合
+
+運営者名・お問い合わせ先・公開URLなど、デプロイ先ごとに変わる情報は `site.config.ts` にまとめています。フォークして自分のサイトとして公開する場合は、まずこのファイルを書き換えてください。値はビルド時に、フッター、`index.html` の canonical / OG / JSON-LD、`robots.txt` / `sitemap.xml`、プライバシーポリシー・利用規約の運営者名や URL に反映されます。
+
+- `privacy.html` / `terms.html` の本文は Google Cloud Run でのホスティングを前提に書いています。別のホスティングで公開する場合は本文も見直してください
+- `cloudbuild.yaml` の `substitutions`（サービス名・リージョン）と `CLOUD_RUN_DEPLOY.md` も自分の環境に合わせてください
+
+## デプロイ
+
+Cloud Run へのデプロイ手順は [CLOUD_RUN_DEPLOY.md](CLOUD_RUN_DEPLOY.md) を参照してください。
 
 ## ライセンス
 
@@ -53,58 +72,52 @@ MIT License
 
 ## お問い合わせ
 
-[ti@aroka.net](mailto:ti@aroka.net)
+[お問い合わせフォーム](https://docs.google.com/forms/d/e/FORM_ID_TBD/viewform)
 
 ---
 
 # PDF to JPEG Converter (English)
 
-A simple and high-performance PDF to JPEG conversion tool.
+A simple PDF to JPEG converter that runs entirely in your browser.
+
+- Live demo: [https://pdf2jpeg.aroka.net](https://pdf2jpeg.aroka.net) (Japanese UI)
 
 ## Features
 
-- 📄 Convert PDF to JPEG images
-- 🔒 **Fully Private**: No data sent to servers
+- 📄 Convert each PDF page to a JPEG image
+- 🔒 PDF files are processed in the browser and never uploaded to a server
 - 🖱️ Drag & drop support
-- 📁 Individual and bulk download
-- ⚙️ Quality and size settings
+- 📁 Individual download or ZIP bulk download
+- ⚙️ Quality and resolution settings
 - 📱 Mobile friendly
-
-## Live Demo
-
-- [https://pdf2jpeg.aroka.net](https://pdf2jpeg.aroka.net)
-
-## How to Use
-
-1. Select or drag & drop PDF file
-2. Set quality and size (if needed)
-3. Click "Convert" button
-4. Download converted images
 
 ## Privacy & Security
 
-- 🔒 **Complete Client-Side Processing**: PDF files are never uploaded to servers
-- 💾 **No Data Storage**: All processing happens in your browser
-- 🛡️ **Confidential Documents Safe**: Zero data breach risk
-- 🌐 **Works Offline**: No network required after initial load
+- **No upload**: All processing happens in the browser with PDF.js. There is no code path that sends your PDF or the converted images to the application server.
+- **No third-party requests**: PDF.js, JSZip and CSS are bundled and served from the same origin (no runtime CDN requests).
+- **Access logs**: Cloud Run records standard access logs (IP address, timestamp, URL, User-Agent). See the [privacy policy](https://pdf2jpeg.aroka.net/privacy) (Japanese).
+- **No cookies, no analytics.**
+- **Security headers**: CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy and HSTS are set by nginx (`security-headers.conf`).
 
-## Technical Specs
+## Tech Stack
 
-- **Frontend**: React + TypeScript
-- **PDF Processing**: PDF.js (runs in browser)
-- **Deployment**: Google Cloud Run (static file serving only)
-- **Max File Size**: 100MB
-- **Supported Browsers**: Chrome, Firefox, Safari, Edge
+- **Frontend**: React 19 + TypeScript + Vite 7 + Tailwind CSS 4
+- **PDF processing**: PDF.js (pdfjs-dist, runs in the browser)
+- **Deployment**: nginx on Google Cloud Run (static file serving only)
+- **Max file size**: 100MB
 
 ## Local Development
 
 ```bash
-# Install
 npm install
-
-# Start dev server
 npm run dev
 ```
+
+Requires Node.js 22 or later.
+
+## Forking
+
+Deployment-specific values (operator name, contact form, site URL, related links) live in `site.config.ts`. Edit it first; the values are injected at build time into the footer, `index.html` metadata, `robots.txt` / `sitemap.xml` and the policy pages. The privacy policy and terms (Japanese) assume Cloud Run hosting, so review them for your setup.
 
 ## License
 
@@ -112,4 +125,4 @@ MIT License
 
 ## Contact
 
-[ti@aroka.net](mailto:ti@aroka.net)
+[Contact form](https://docs.google.com/forms/d/e/FORM_ID_TBD/viewform)
