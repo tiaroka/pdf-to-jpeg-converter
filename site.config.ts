@@ -27,8 +27,8 @@ export type SiteConfig = {
 export const siteConfig: SiteConfig = {
   siteUrl: 'https://pdf2jpeg.aroka.net/',
   operator: 'aroka works',
-  // TODO: 本アプリ専用の Google フォームを作成したら実 URL に差し替える
-  contactFormUrl: 'https://docs.google.com/forms/d/e/FORM_ID_TBD/viewform',
+  // 本アプリ専用の Google フォーム（ログイン不要）
+  contactFormUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdj_YooRSBAme63wfZTnnGAZi2W_kh7SfM39WcBhJi_gxqD_Q/viewform',
   repoUrl: 'https://github.com/tiaroka/pdf-to-jpeg-converter',
   relatedLinks: [
     { label: '開発者ポートフォリオ', url: 'https://portfolio.aroka.net/' },
