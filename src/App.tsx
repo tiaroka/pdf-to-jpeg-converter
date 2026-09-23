@@ -296,7 +296,7 @@ const PDFToJPEGConverter = () => {
         <p className="text-gray-600 text-center mb-8">
           PDFの各ページをJPEG画像に変換し、1枚ずつ、またはまとめて保存できます。
           <br />
-          変換はお使いのブラウザの中で行われ、PDFファイルはどこにも送信されません。
+          無料・登録不要。変換はお使いのブラウザの中で行われ、PDFファイルはどこにも送信されません。
         </p>
 
         <div className="mb-8">
