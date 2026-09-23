@@ -2,8 +2,10 @@
 @import "tailwindcss";
 
 @layer base {
-  /* v4 の Preflight は button の cursor を default にするため、元の挙動に戻す */
-  button {
+  /* v4 の Preflight は button の cursor を default にするため、元の挙動に戻す。
+     summary（details の見出し）も同様にクリックできることを示す */
+  button,
+  summary {
     cursor: pointer;
   }
 }
