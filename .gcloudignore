@@ -1,0 +1,12 @@
+# gcloud builds submit で Cloud Build に送らないファイル（.dockerignore と揃える）
+.git
+.gitignore
+.github
+.claude
+node_modules
+dist
+dist-ssr
+documents
+*.log
+.env
+.DS_Store
