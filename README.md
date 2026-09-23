@@ -72,7 +72,7 @@ MIT License
 
 ## お問い合わせ
 
-[お問い合わせフォーム](https://docs.google.com/forms/d/e/FORM_ID_TBD/viewform)
+サイトのフッターにある「お問い合わせ」フォームからご連絡ください（URL は `site.config.ts` で設定）
 
 ---
 
@@ -125,4 +125,4 @@ MIT License
 
 ## Contact
 
-[Contact form](https://docs.google.com/forms/d/e/FORM_ID_TBD/viewform)
+Use the contact form linked in the site footer (configured in `site.config.ts`).
