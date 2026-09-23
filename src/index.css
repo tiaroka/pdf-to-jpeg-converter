@@ -10,6 +10,8 @@
 
 body {
   margin: 0;
+  /* 変換 UI・案内文・フッターを同じ薄いグレー地に載せる（React の外にも静的な本文があるため body で指定） */
+  background-color: #f3f4f6;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Hiragino Sans',
     'Yu Gothic UI', 'Meiryo', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;

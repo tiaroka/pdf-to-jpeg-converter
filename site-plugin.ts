@@ -3,6 +3,11 @@
 import type { Plugin } from 'vite'
 import type { SiteConfig } from './site.config'
 
+// アプリそのものの名前と説明（デプロイ先によらない値。サイト名は site.config.ts の siteName）
+export const APP_NAME = 'PDF to JPEG 変換ツール'
+export const APP_DESCRIPTION =
+  'PDFの各ページをJPEG画像に変換して保存できる無料ツール。処理はブラウザ内で完結し、ファイルはサーバーに送信されません。登録不要・透かしなし・ページ数制限なし。'
+
 export const escapeHtml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
@@ -19,29 +24,78 @@ export const normalizeSiteUrl = (url: string): string => url.replace(/\/*$/, '/'
 export const fill = (html: string, vars: Record<string, string>): string =>
   html.replace(/\{\{(\w+)\}\}/g, (m, k: string) => (Object.hasOwn(vars, k) ? vars[k] : m))
 
+const externalLink = (href: string, label: string): string =>
+  `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 hover:underline">${escapeHtml(label)}</a>`
+
+// 検索エンジン向けの構造化データ（WebSite + WebApplication）。
+// <script> 内に置くため、JSON 文字列中の < は u003c 形式にエスケープして </script> で抜けないようにする
+export const buildJsonLd = (config: SiteConfig): string => {
+  const siteUrl = normalizeSiteUrl(config.siteUrl)
+  const organization = config.operator ? { '@type': 'Organization', name: config.operator } : undefined
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${siteUrl}#website`,
+        url: siteUrl,
+        name: config.siteName,
+        alternateName: APP_NAME,
+        inLanguage: 'ja',
+        ...(organization ? { publisher: organization } : {}),
+      },
+      {
+        '@type': 'WebApplication',
+        '@id': `${siteUrl}#app`,
+        name: config.siteName,
+        alternateName: APP_NAME,
+        url: siteUrl,
+        description: APP_DESCRIPTION,
+        applicationCategory: 'UtilitiesApplication',
+        operatingSystem: 'Any',
+        browserRequirements: 'Requires JavaScript',
+        inLanguage: 'ja',
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'JPY' },
+        license: 'https://opensource.org/licenses/MIT',
+        ...(organization ? { author: organization } : {}),
+      },
+    ],
+  }
+  return JSON.stringify(graph, null, 2).replace(/</g, '\\u003c')
+}
+
 // 差し込み用の値を組み立てる。属性値・本文のどちらに入っても壊れないよう、すべて HTML エスケープする
 export const buildVars = (config: SiteConfig): Record<string, string> => {
   const siteUrl = normalizeSiteUrl(config.siteUrl)
-  const relatedLinks = config.relatedLinks
-    .map(
-      (l) =>
-        ` · <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.label)}</a>`,
-    )
-    .join('')
+  const relatedLinks = config.relatedLinks.map((l) => ` · ${externalLink(l.url, l.label)}`).join('')
+  // トップページのフッター下段: サイト名（アプリ名）· 運営: ○○ · 関連リンク…（未設定の項目は出さない）
+  const footerCredits =
+    `${escapeHtml(config.siteName)}（${escapeHtml(APP_NAME)}）` +
+    (config.operator ? ` · 運営: ${escapeHtml(config.operator)}` : '') +
+    relatedLinks
   return {
     SITE_URL: escapeHtml(siteUrl),
+    SITE_NAME: escapeHtml(config.siteName),
+    APP_NAME: escapeHtml(APP_NAME),
+    APP_DESCRIPTION: escapeHtml(APP_DESCRIPTION),
     OPERATOR: escapeHtml(config.operator),
     CONTACT_FORM_URL: escapeHtml(config.contactFormUrl),
     REPO_URL: escapeHtml(config.repoUrl),
     LICENSE_URL: escapeHtml(
       config.repoUrl ? `${config.repoUrl}/blob/master/LICENSE` : 'https://opensource.org/licenses/MIT',
     ),
-    RELATED_LINKS: relatedLinks,
-    POLICY_DATE: escapeHtml(formatJaDate(config.policyDate)),
-    // JSON-LD の author。運営者が未設定なら行ごと省く。</script> で抜けないよう < は < にする
-    JSON_LD_AUTHOR: config.operator
-      ? `"author": { "@type": "Organization", "name": ${JSON.stringify(config.operator).replace(/</g, '\\u003c')} },`
+    // 未設定ならリンクごと出さない
+    CONTACT_LINK: config.contactFormUrl
+      ? `<a href="${escapeHtml(config.contactFormUrl)}" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-700">お問い合わせ</a>`
       : '',
+    REPO_LINK: config.repoUrl
+      ? `<a href="${escapeHtml(config.repoUrl)}" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-700">GitHub</a>`
+      : '',
+    RELATED_LINKS: relatedLinks,
+    FOOTER_CREDITS: footerCredits,
+    POLICY_DATE: escapeHtml(formatJaDate(config.policyDate)),
+    JSON_LD: buildJsonLd(config),
   }
 }
 

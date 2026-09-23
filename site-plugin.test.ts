@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { SiteConfig } from './site.config'
 import {
+  APP_NAME,
+  buildJsonLd,
   buildRobots,
   buildSitemap,
   buildVars,
@@ -12,6 +14,7 @@ import {
 
 const base: SiteConfig = {
   siteUrl: 'https://example.com',
+  siteName: 'pdf2jpeg',
   operator: 'Tom & Jerry <Inc>',
   contactFormUrl: 'https://forms.example.com/?a=1&b=2',
   repoUrl: 'https://github.com/example/repo',
@@ -66,18 +69,49 @@ describe('buildVars', () => {
   })
   it('関連リンクは先頭に区切りを付けて並べる', () => {
     expect(vars.RELATED_LINKS).toBe(
-      ' · <a href="https://blog.example.com/?x=1&amp;y=2" target="_blank" rel="noopener noreferrer">Blog &lt;β&gt;</a>',
+      ' · <a href="https://blog.example.com/?x=1&amp;y=2" target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 hover:underline">Blog &lt;β&gt;</a>',
     )
   })
-  it('JSON-LD の author は < を \\u003c にする', () => {
-    expect(vars.JSON_LD_AUTHOR).toContain('\\u003cInc>')
-    expect(vars.JSON_LD_AUTHOR).not.toContain('<Inc>')
+  it('フッターの表記はサイト名（アプリ名）・運営・関連リンクの順', () => {
+    expect(vars.FOOTER_CREDITS).toBe(
+      `pdf2jpeg（${APP_NAME}） · 運営: Tom &amp; Jerry &lt;Inc&gt;` + vars.RELATED_LINKS,
+    )
   })
-  it('運営者が空なら JSON-LD の author 行は空になる', () => {
-    expect(buildVars({ ...base, operator: '' }).JSON_LD_AUTHOR).toBe('')
+  it('運営者と関連リンクが無ければサイト名だけになる', () => {
+    expect(buildVars({ ...base, operator: '', relatedLinks: [] }).FOOTER_CREDITS).toBe(
+      `pdf2jpeg（${APP_NAME}）`,
+    )
   })
-  it('repoUrl が空なら LICENSE_URL は OSI のページになる', () => {
-    expect(buildVars({ ...base, repoUrl: '' }).LICENSE_URL).toBe('https://opensource.org/licenses/MIT')
+  it('お問い合わせ・GitHub のリンクは未設定なら空になる', () => {
+    expect(vars.CONTACT_LINK).toContain('お問い合わせ')
+    expect(vars.REPO_LINK).toContain('GitHub')
+    const none = buildVars({ ...base, contactFormUrl: '', repoUrl: '' })
+    expect(none.CONTACT_LINK).toBe('')
+    expect(none.REPO_LINK).toBe('')
+    expect(none.LICENSE_URL).toBe('https://opensource.org/licenses/MIT')
+  })
+})
+
+describe('buildJsonLd', () => {
+  it('WebSite と WebApplication をサイト名で出し、アプリ名を alternateName に残す', () => {
+    const json = JSON.parse(buildJsonLd(base).replace(/\\u003c/g, '<'))
+    const [site, app] = json['@graph']
+    expect(site['@type']).toBe('WebSite')
+    expect(site.name).toBe('pdf2jpeg')
+    expect(site.alternateName).toBe(APP_NAME)
+    expect(site.url).toBe('https://example.com/')
+    expect(app['@type']).toBe('WebApplication')
+    expect(app.author).toEqual({ '@type': 'Organization', name: 'Tom & Jerry <Inc>' })
+  })
+  it('< は \\u003c にして script 要素を壊さない', () => {
+    const raw = buildJsonLd(base)
+    expect(raw).toContain('\\u003cInc>')
+    expect(raw).not.toContain('<Inc>')
+  })
+  it('運営者が空なら author / publisher を出さない', () => {
+    const json = JSON.parse(buildJsonLd({ ...base, operator: '' }))
+    expect(json['@graph'][0].publisher).toBeUndefined()
+    expect(json['@graph'][1].author).toBeUndefined()
   })
 })
 

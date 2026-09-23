@@ -8,7 +8,6 @@ import { ConversionError, getErrorMessage } from './types/errors';
 import { validateFile } from './lib/validate-file';
 import { describePdfError } from './lib/pdf-errors';
 import { clampScale } from './lib/canvas-limits';
-import { siteConfig } from '../site.config';
 
 type ConvertedImage = {
   pageNumber: number;
@@ -85,71 +84,6 @@ const ImagePreview = ({
         </button>
       </div>
     </div>
-  );
-};
-
-const Footer = () => {
-  // 運営者名と関連サイトを「·」区切りで並べる（未設定の項目は出さない）
-  const credits: React.ReactNode[] = [];
-  if (siteConfig.operator) {
-    credits.push(<span key="operator">運営: {siteConfig.operator}</span>);
-  }
-  for (const link of siteConfig.relatedLinks) {
-    credits.push(
-      <a
-        key={link.url}
-        href={link.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:text-gray-600 hover:underline"
-      >
-        {link.label}
-      </a>,
-    );
-  }
-
-  return (
-    <footer className="mt-8 text-center text-sm text-gray-500 space-y-2">
-      <p>PDFファイルはお使いのブラウザ内で処理され、サーバーには送信されません。</p>
-      <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-        <a href="/privacy" className="underline hover:text-gray-700">
-          プライバシーポリシー
-        </a>
-        <a href="/terms" className="underline hover:text-gray-700">
-          利用規約
-        </a>
-        {siteConfig.contactFormUrl && (
-          <a
-            href={siteConfig.contactFormUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-gray-700"
-          >
-            お問い合わせ
-          </a>
-        )}
-        {siteConfig.repoUrl && (
-          <a
-            href={siteConfig.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-gray-700"
-          >
-            GitHub
-          </a>
-        )}
-      </nav>
-      {credits.length > 0 && (
-        <p className="text-xs text-gray-400">
-          {credits.map((node, i) => (
-            <React.Fragment key={i}>
-              {i > 0 && <span className="mx-1">·</span>}
-              {node}
-            </React.Fragment>
-          ))}
-        </p>
-      )}
-    </footer>
   );
 };
 
@@ -351,177 +285,176 @@ const PDFToJPEGConverter = () => {
     clearFileInput();
   };
 
+  // 案内文とフッターは index.html 側の静的 HTML（検索エンジンが JS なしで読めるように）。
+  // ここでは変換 UI のカードだけを描画する
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-            PDF → JPEG 変換ツール
-          </h1>
-          <p className="text-gray-600 text-center mb-8">
-            PDFファイルを高品質なJPEG画像に変換します。<br />
-            プレゼンテーションや資料を簡単に画像として保存・共有できます。
-          </p>
+    <div className="max-w-4xl mx-auto px-6 pt-6">
+      <div className="bg-white rounded-lg shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
+          PDF を JPEG 画像として保存
+        </h1>
+        <p className="text-gray-600 text-center mb-8">
+          PDF の各ページを JPEG 画像に変換し、1 枚ずつ、またはまとめて保存できます。
+          <br />
+          変換はお使いのブラウザの中で行われ、PDF ファイルはどこにも送信されません。
+        </p>
 
-          <div className="mb-8">
-            {/* label で包むと、クリックでもキーボード（Tab → Enter/Space）でもファイル選択が開く */}
-            <label
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`block border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-blue-500 ${
-                isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" aria-hidden="true" />
-              <span className="block text-gray-600 mb-2">PDFファイルをドラッグ＆ドロップ</span>
-              <span className="block text-sm text-gray-500">または クリックして選択</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,application/pdf"
-                onChange={handleFileChange}
-                className="sr-only"
-                aria-label="PDFファイルを選択"
-              />
-            </label>
-            {phase.kind !== 'idle' && (
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                選択されたファイル: {phase.file.name}
-              </p>
-            )}
-          </div>
-
-          {phase.kind === 'selected' && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h2 className="font-semibold mb-4">変換設定</h2>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="quality" className="block text-sm font-medium text-gray-700 mb-2">
-                    画質: {Math.round(quality * 100)}%
-                  </label>
-                  <input
-                    id="quality"
-                    type="range"
-                    min="0.1"
-                    max="1"
-                    step="0.1"
-                    value={quality}
-                    onChange={(e) => setQuality(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="scale" className="block text-sm font-medium text-gray-700 mb-2">
-                    解像度倍率: {scale}x
-                  </label>
-                  <input
-                    id="scale"
-                    type="range"
-                    min="1"
-                    max="4"
-                    step="0.5"
-                    value={scale}
-                    onChange={(e) => setScale(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">{error}</p>
-            </div>
-          )}
-
-          {phase.kind === 'selected' && (
-            <button
-              onClick={convertPDFToImages}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              JPEG画像に変換
-            </button>
-          )}
-
-          {phase.kind === 'converting' && (
-            <div className="text-center py-8" aria-live="polite">
-              <Loader2
-                className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600"
-                aria-hidden="true"
-              />
-              <p className="text-gray-600 mb-4">
-                {phase.total > 0
-                  ? `変換中... ${phase.done} / ${phase.total} ページ`
-                  : 'PDFを読み込んでいます...'}
-              </p>
-              {phase.total > 0 && (
-                <div
-                  className="w-full bg-gray-200 rounded-full h-2 mb-6"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={phase.total}
-                  aria-valuenow={phase.done}
-                  aria-label="変換の進捗"
-                >
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
-                    style={{ width: `${(phase.done / phase.total) * 100}%` }}
-                  />
-                </div>
-              )}
-              <button
-                onClick={cancelConversion}
-                className="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                キャンセル
-              </button>
-            </div>
-          )}
-
-          {phase.kind === 'done' && (
-            <div>
-              {phase.notice && (
-                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-yellow-800 text-sm">{phase.notice}</p>
-                </div>
-              )}
-              <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-                <h2 className="text-xl font-semibold text-gray-800" aria-live="polite">
-                  変換完了: {phase.images.length}枚のスライド
-                </h2>
-                <button
-                  onClick={handleDownloadAll}
-                  disabled={zipping}
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait"
-                >
-                  <Download className="w-4 h-4" aria-hidden="true" />
-                  {zipping ? 'ZIPを作成中...' : 'すべてダウンロード（ZIP）'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {phase.images.map((image) => (
-                  <ImagePreview
-                    key={image.pageNumber}
-                    image={image}
-                    onDownload={handleDownloadImage}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={resetAll}
-                className="w-full mt-6 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                新しいPDFを変換
-              </button>
-            </div>
+        <div className="mb-8">
+          {/* label で包むと、クリックでもキーボード（Tab → Enter/Space）でもファイル選択が開く */}
+          <label
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`block border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-blue-500 ${
+              isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+            }`}
+          >
+            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" aria-hidden="true" />
+            <span className="block text-gray-600 mb-2">PDFファイルをドラッグ＆ドロップ</span>
+            <span className="block text-sm text-gray-500">または クリックして選択</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={handleFileChange}
+              className="sr-only"
+              aria-label="PDFファイルを選択"
+            />
+          </label>
+          {phase.kind !== 'idle' && (
+            <p className="mt-4 text-sm text-gray-600 text-center">
+              選択されたファイル: {phase.file.name}
+            </p>
           )}
         </div>
 
-        <Footer />
+        {phase.kind === 'selected' && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h2 className="font-semibold mb-4">変換設定</h2>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="quality" className="block text-sm font-medium text-gray-700 mb-2">
+                  画質: {Math.round(quality * 100)}%
+                </label>
+                <input
+                  id="quality"
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.1"
+                  value={quality}
+                  onChange={(e) => setQuality(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label htmlFor="scale" className="block text-sm font-medium text-gray-700 mb-2">
+                  解像度倍率: {scale}x
+                </label>
+                <input
+                  id="scale"
+                  type="range"
+                  min="1"
+                  max="4"
+                  step="0.5"
+                  value={scale}
+                  onChange={(e) => setScale(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {phase.kind === 'selected' && (
+          <button
+            onClick={convertPDFToImages}
+            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            JPEG画像に変換
+          </button>
+        )}
+
+        {phase.kind === 'converting' && (
+          <div className="text-center py-8" aria-live="polite">
+            <Loader2
+              className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600"
+              aria-hidden="true"
+            />
+            <p className="text-gray-600 mb-4">
+              {phase.total > 0
+                ? `変換中... ${phase.done} / ${phase.total} ページ`
+                : 'PDFを読み込んでいます...'}
+            </p>
+            {phase.total > 0 && (
+              <div
+                className="w-full bg-gray-200 rounded-full h-2 mb-6"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={phase.total}
+                aria-valuenow={phase.done}
+                aria-label="変換の進捗"
+              >
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all"
+                  style={{ width: `${(phase.done / phase.total) * 100}%` }}
+                />
+              </div>
+            )}
+            <button
+              onClick={cancelConversion}
+              className="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              キャンセル
+            </button>
+          </div>
+        )}
+
+        {phase.kind === 'done' && (
+          <div>
+            {phase.notice && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-800 text-sm">{phase.notice}</p>
+              </div>
+            )}
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+              <h2 className="text-xl font-semibold text-gray-800" aria-live="polite">
+                変換完了: {phase.images.length}枚のスライド
+              </h2>
+              <button
+                onClick={handleDownloadAll}
+                disabled={zipping}
+                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait"
+              >
+                <Download className="w-4 h-4" aria-hidden="true" />
+                {zipping ? 'ZIPを作成中...' : 'すべてダウンロード（ZIP）'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {phase.images.map((image) => (
+                <ImagePreview
+                  key={image.pageNumber}
+                  image={image}
+                  onDownload={handleDownloadImage}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={resetAll}
+              className="w-full mt-6 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              新しいPDFを変換
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

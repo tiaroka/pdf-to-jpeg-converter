@@ -1,6 +1,6 @@
-# PDF to JPEG 変換ツール
+# PDF to JPEG 変換ツール（pdf2jpeg）
 
-ブラウザ内で完結する、シンプルなPDF→JPEG画像変換ツールです。
+ブラウザ内で完結する、シンプルなPDF→JPEG画像変換ツールです。公開サイトでは「pdf2jpeg」の名前で運用しています（サイト名は `site.config.ts` の `siteName`）。
 
 - ライブデモ: [https://pdf2jpeg.aroka.net](https://pdf2jpeg.aroka.net)
 - [プライバシーポリシー](https://pdf2jpeg.aroka.net/privacy) / [利用規約](https://pdf2jpeg.aroka.net/terms)

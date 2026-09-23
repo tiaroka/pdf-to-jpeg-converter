@@ -12,6 +12,8 @@
 export type SiteConfig = {
   /** 公開 URL（末尾スラッシュは有無どちらでもよい）。canonical / OG / sitemap / robots に使う */
   siteUrl: string;
+  /** サイト名。title の先頭・OG の site_name・構造化データ・フッターに使う（短い固有名） */
+  siteName: string;
   /** 運営者表記（フッター・ポリシー）。空文字なら表示しない */
   operator: string;
   /** お問い合わせフォームの URL。空文字ならリンクを出さない */
@@ -26,6 +28,7 @@ export type SiteConfig = {
 
 export const siteConfig: SiteConfig = {
   siteUrl: 'https://pdf2jpeg.aroka.net/',
+  siteName: 'pdf2jpeg',
   operator: 'aroka works',
   // 本アプリ専用の Google フォーム（ログイン不要）
   contactFormUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdj_YooRSBAme63wfZTnnGAZi2W_kh7SfM39WcBhJi_gxqD_Q/viewform',
