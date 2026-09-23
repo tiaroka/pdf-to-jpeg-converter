@@ -1,5 +1,5 @@
 {
-  "name": "PDF to JPEG 変換ツール",
+  "name": "PDF to JPEG変換ツール",
   "short_name": "pdf2jpeg",
   "description": "PDFをJPEG画像に変換する無料のオンラインツール。処理はすべてブラウザ内で完結します。",
   "start_url": "/",

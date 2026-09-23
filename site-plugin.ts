@@ -1,10 +1,10 @@
-// site.config.ts の値を HTML に差し込み、robots.txt / sitemap.xml を生成する Vite プラグイン。
-// 純粋関数（escapeHtml / fill / buildVars など）は vite.config.ts から切り離してテストできるようにしている。
+// site.config.tsの値をHTMLに差し込み、robots.txt / sitemap.xmlを生成するViteプラグイン。
+// 純粋関数（escapeHtml / fill / buildVarsなど）はvite.config.tsから切り離してテストできるようにしている。
 import type { Plugin } from 'vite'
 import type { SiteConfig } from './site.config'
 
-// アプリそのものの名前と説明（デプロイ先によらない値。サイト名は site.config.ts の siteName）
-export const APP_NAME = 'PDF to JPEG 変換ツール'
+// アプリそのものの名前と説明（デプロイ先によらない値。サイト名はsite.config.tsのsiteName）
+export const APP_NAME = 'PDF to JPEG変換ツール'
 export const APP_DESCRIPTION =
   'PDFの各ページをJPEG画像に変換して保存できる無料ツール。処理はブラウザ内で完結し、ファイルはサーバーに送信されません。登録不要・透かしなし・ページ数制限なし。'
 
@@ -20,7 +20,7 @@ export const formatJaDate = (iso: string): string => {
 // 末尾スラッシュの有無で結果が変わらないよう正規化する
 export const normalizeSiteUrl = (url: string): string => url.replace(/\/*$/, '/')
 
-// HTML の {{NAME}} を置き換える。vars に無い名前（prototype 由来の名前を含む）はそのまま残す
+// HTMLの{{NAME}}を置き換える。varsに無い名前（prototype由来の名前を含む）はそのまま残す
 export const fill = (html: string, vars: Record<string, string>): string =>
   html.replace(/\{\{(\w+)\}\}/g, (m, k: string) => (Object.hasOwn(vars, k) ? vars[k] : m))
 
@@ -28,7 +28,7 @@ const externalLink = (href: string, label: string): string =>
   `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="hover:text-gray-600 hover:underline">${escapeHtml(label)}</a>`
 
 // 検索エンジン向けの構造化データ（WebSite + WebApplication）。
-// <script> 内に置くため、JSON 文字列中の < は u003c 形式にエスケープして </script> で抜けないようにする
+// <script> 内に置くため、JSON文字列中の < はu003c形式にエスケープして </script> で抜けないようにする
 export const buildJsonLd = (config: SiteConfig): string => {
   const siteUrl = normalizeSiteUrl(config.siteUrl)
   const organization = config.operator ? { '@type': 'Organization', name: config.operator } : undefined
@@ -65,7 +65,7 @@ export const buildJsonLd = (config: SiteConfig): string => {
   return JSON.stringify(graph, null, 2).replace(/</g, '\\u003c')
 }
 
-// 差し込み用の値を組み立てる。属性値・本文のどちらに入っても壊れないよう、すべて HTML エスケープする
+// 差し込み用の値を組み立てる。属性値・本文のどちらに入っても壊れないよう、すべてHTMLエスケープする
 export const buildVars = (config: SiteConfig): Record<string, string> => {
   const siteUrl = normalizeSiteUrl(config.siteUrl)
   const relatedLinks = config.relatedLinks.map((l) => ` · ${externalLink(l.url, l.label)}`).join('')
@@ -102,7 +102,7 @@ export const buildVars = (config: SiteConfig): Record<string, string> => {
 export const buildRobots = (config: SiteConfig): string =>
   `User-agent: *\nAllow: /\n\nSitemap: ${normalizeSiteUrl(config.siteUrl)}sitemap.xml\n`
 
-// lastmod はビルド日ではなく実際の更新日を出す（不正確な lastmod は検索エンジンに無視される）。
+// lastmodはビルド日ではなく実際の更新日を出す（不正確なlastmodは検索エンジンに無視される）。
 // トップは更新日を追跡していないので出さない。ポリシー・規約は制定日
 export const buildSitemap = (config: SiteConfig): string => {
   const siteUrl = normalizeSiteUrl(config.siteUrl)
@@ -131,7 +131,7 @@ export function sitePlugin(config: SiteConfig): Plugin {
       this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap })
     },
     configureServer(server) {
-      // 開発サーバーでも本番（nginx）と同じ URL で開けるようにする
+      // 開発サーバーでも本番（nginx）と同じURLで開けるようにする
       server.middlewares.use((req, res, next) => {
         if (req.url === '/privacy' || req.url === '/terms') {
           req.url += '.html'

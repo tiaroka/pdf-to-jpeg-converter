@@ -1,4 +1,4 @@
-# PDF to JPEG 変換ツール（pdf2jpeg）
+# PDF to JPEG変換ツール（pdf2jpeg）
 
 ブラウザ内で完結する、シンプルなPDF→JPEG画像変換ツールです。公開サイトでは「pdf2jpeg」の名前で運用しています（サイト名は `site.config.ts` の `siteName`）。
 
@@ -7,36 +7,36 @@
 
 ## 機能
 
-- 📄 PDF の各ページを JPEG 画像に変換
-- 🔒 PDF ファイルはブラウザ内で処理され、サーバーには送信されない
+- 📄 PDFの各ページをJPEG画像に変換
+- 🔒 PDFファイルはブラウザ内で処理され、サーバーには送信されない
 - 🖱️ ドラッグ&ドロップ対応
-- 📁 個別ダウンロード・ZIP 一括ダウンロード
+- 📁 個別ダウンロード・ZIP一括ダウンロード
 - ⚙️ 画質・解像度倍率の設定
 - 📱 スマホ対応
 
 ## 使い方
 
-1. PDF ファイルを選択またはドラッグ&ドロップ
-2. 画質と解像度を設定（必要に応じて）
-3. 「JPEG画像に変換」ボタンをクリック
-4. 変換された画像をダウンロード
+1. PDFファイルを選択またはドラッグ&ドロップ
+2.画質と解像度を設定（必要に応じて）
+3.「JPEG画像に変換」ボタンをクリック
+4.変換された画像をダウンロード
 
 ## プライバシー・セキュリティ
 
-- **PDF はアップロードされません**: 変換処理はすべてブラウザ内（PDF.js）で実行され、PDF ファイルや変換結果がアプリのサーバーへ送られるコードはありません
-- **第三者への通信なし**: PDF.js、JSZip などのライブラリはすべてビルドに同梱し、同一オリジンから配信しています（CDN への実行時通信はありません）
-- **アクセスログ**: Cloud Run が IP アドレス・日時・URL・User-Agent などのアクセスログを記録します。詳細は[プライバシーポリシー](https://pdf2jpeg.aroka.net/privacy)を参照してください
+- **PDFはアップロードされません**: 変換処理はすべてブラウザ内（PDF.js）で実行され、PDFファイルや変換結果がアプリのサーバーへ送られるコードはありません
+- **第三者への通信なし**: PDF.js、JSZipなどのライブラリはすべてビルドに同梱し、同一オリジンから配信しています（CDNへの実行時通信はありません）
+- **アクセスログ**: Cloud RunがIPアドレス・日時・URL・User-Agentなどのアクセスログを記録します。詳細は[プライバシーポリシー](https://pdf2jpeg.aroka.net/privacy)を参照してください
 - **Cookie・アクセス解析なし**
-- **セキュリティヘッダー**: CSP、X-Content-Type-Options、X-Frame-Options、Referrer-Policy、HSTS などを nginx で付与しています（`security-headers.conf`）
+- **セキュリティヘッダー**: CSP、X-Content-Type-Options、X-Frame-Options、Referrer-Policy、HSTSなどをnginxで付与しています（`security-headers.conf`）
 
 ## 技術仕様
 
 - **フロントエンド**: React 19 + TypeScript + Vite 7 + Tailwind CSS 4
-- **PDF 処理**: [PDF.js](https://mozilla.github.io/pdf.js/)（pdfjs-dist、ブラウザ内で実行）
-- **ZIP 生成**: JSZip
-- **配信**: Google Cloud Run 上の nginx（静的ファイル配信のみ）
+- **PDF処理**: [PDF.js](https://mozilla.github.io/pdf.js/)（pdfjs-dist、ブラウザ内で実行）
+- **ZIP生成**: JSZip
+- **配信**: Google Cloud Run上のnginx（静的ファイル配信のみ）
 - **最大ファイルサイズ**: 100MB
-- **対応ブラウザ**: Chrome, Firefox, Safari, Edge の最新版
+- **対応ブラウザ**: Chrome, Firefox, Safari, Edgeの最新版
 
 ## ローカル開発
 
@@ -53,18 +53,18 @@ npm run build
 npm run preview
 ```
 
-Node.js 22 以上が必要です。
+Node.js 22以上が必要です。
 
 ## フォークして使う場合
 
-運営者名・お問い合わせ先・公開URLなど、デプロイ先ごとに変わる情報は `site.config.ts` にまとめています。フォークして自分のサイトとして公開する場合は、まずこのファイルを書き換えてください。値はビルド時に、フッター、`index.html` の canonical / OG / JSON-LD、`robots.txt` / `sitemap.xml`、プライバシーポリシー・利用規約の運営者名や URL に反映されます。
+運営者名・お問い合わせ先・公開URLなど、デプロイ先ごとに変わる情報は `site.config.ts` にまとめています。フォークして自分のサイトとして公開する場合は、まずこのファイルを書き換えてください。値はビルド時に、フッター、`index.html` のcanonical / OG / JSON-LD、`robots.txt` / `sitemap.xml`、プライバシーポリシー・利用規約の運営者名やURLに反映されます。
 
-- `privacy.html` / `terms.html` の本文は Google Cloud Run でのホスティングを前提に書いています。別のホスティングで公開する場合は本文も見直してください
+- `privacy.html` / `terms.html` の本文はGoogle Cloud Runでのホスティングを前提に書いています。別のホスティングで公開する場合は本文も見直してください
 - `cloudbuild.yaml` の `substitutions`（サービス名・リージョン）と `CLOUD_RUN_DEPLOY.md` も自分の環境に合わせてください
 
 ## デプロイ
 
-Cloud Run へのデプロイ手順は [CLOUD_RUN_DEPLOY.md](CLOUD_RUN_DEPLOY.md) を参照してください。
+Cloud Runへのデプロイ手順は [CLOUD_RUN_DEPLOY.md](CLOUD_RUN_DEPLOY.md)を参照してください。
 
 ## ライセンス
 
@@ -72,7 +72,7 @@ MIT License
 
 ## お問い合わせ
 
-サイトのフッターにある「お問い合わせ」フォームからご連絡ください（URL は `site.config.ts` で設定）
+サイトのフッターにある「お問い合わせ」フォームからご連絡ください（URLは `site.config.ts` で設定）
 
 ---
 

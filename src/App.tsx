@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Upload, Download, Loader2 } from 'lucide-react';
-// legacy ビルドを使う（modern ビルドは最新ブラウザ専用の構文・API に依存するため、
-// 一般公開のツールとしては対応範囲の広い legacy を選ぶ）
+// legacyビルドを使う（modernビルドは最新ブラウザ専用の構文・APIに依存するため、
+// 一般公開のツールとしては対応範囲の広いlegacyを選ぶ）
 import type { PDFDocumentLoadingTask, PDFPageProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { ConversionError, getErrorMessage } from './types/errors';
@@ -24,15 +24,15 @@ type Phase =
 
 type RenderTask = ReturnType<PDFPageProxy['render']>;
 
-// PDF.js は変換開始時に遅延ロードする（初回表示を軽くするため）。
-// 本体・worker ともにビルド成果物として同一オリジンから配信し、CDN には依存しない。
+// PDF.jsは変換開始時に遅延ロードする（初回表示を軽くするため）。
+// 本体・workerともにビルド成果物として同一オリジンから配信し、CDNには依存しない。
 const loadPdfJs = async () => {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   return pdfjs;
 };
 
-// JSZip も同梱し、必要になった時点で読み込む
+// JSZipも同梱し、必要になった時点で読み込む
 const loadJsZip = () => import('jszip');
 
 const downloadBlob = (blob: Blob, filename: string) => {
@@ -52,7 +52,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 };
 
 // 親コンポーネントの外で定義する（内側に置くと親の再レンダーごとに再マウントされ、
-// Blob URL を作り直してしまう）
+// Blob URLを作り直してしまう）
 const ImagePreview = ({
   image,
   onDownload,
@@ -71,13 +71,13 @@ const ImagePreview = ({
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
       {blobUrl && (
-        <img src={blobUrl} alt={`スライド ${image.pageNumber}`} className="w-full h-auto" />
+        <img src={blobUrl} alt={`スライド${image.pageNumber}`} className="w-full h-auto" />
       )}
       <div className="p-3 bg-gray-50 flex justify-between items-center">
-        <span className="text-sm text-gray-600">スライド {image.pageNumber}</span>
+        <span className="text-sm text-gray-600">スライド{image.pageNumber}</span>
         <button
           onClick={() => onDownload(image)}
-          className="bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
+          className="bg-blue-600 text-white py-1px-3 rounded text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
         >
           <Download className="w-3 h-3" aria-hidden="true" />
           保存
@@ -98,11 +98,11 @@ const PDFToJPEGConverter = () => {
   // キャンセル要求と、進行中の描画タスク
   const cancelRef = useRef(false);
   const renderTaskRef = useRef<RenderTask | null>(null);
-  // 変換完了後、ボタンが押される前に裏で JSZip を読んでおく
+  // 変換完了後、ボタンが押される前に裏でJSZipを読んでおく
   const jszipPromise = useRef<ReturnType<typeof loadJsZip> | null>(null);
 
   const clearFileInput = () => {
-    // 同じファイルを再選択したときにも change イベントが発火するようにする
+    // 同じファイルを再選択したときにもchangeイベントが発火するようにする
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -161,7 +161,7 @@ const PDFToJPEGConverter = () => {
 
     try {
       const pdfjs = await loadPdfJs();
-      // data は worker に転送されるため、以降は再利用しない
+      // dataはworkerに転送されるため、以降は再利用しない
       const data = new Uint8Array(await file.arrayBuffer());
       loadingTask = pdfjs.getDocument({ data });
       const pdf = await loadingTask.promise;
@@ -175,7 +175,7 @@ const PDFToJPEGConverter = () => {
         if (cancelRef.current) throw new Error('cancelled');
 
         const page = await pdf.getPage(pageNum);
-        // 大判ページで canvas の上限を超えないよう、倍率をページごとに丸める
+        // 大判ページでcanvasの上限を超えないよう、倍率をページごとに丸める
         const effectiveScale = clampScale(page.getViewport({ scale: 1 }), scale);
         minEffectiveScale = Math.min(minEffectiveScale, effectiveScale);
         const viewport = page.getViewport({ scale: effectiveScale });
@@ -222,7 +222,7 @@ const PDFToJPEGConverter = () => {
 
       const notice =
         minEffectiveScale < scale
-          ? `一部のページが大きいため、解像度倍率を ${minEffectiveScale.toFixed(2)}x に自動で下げました`
+          ? `一部のページが大きいため、解像度倍率を${minEffectiveScale.toFixed(2)}xに自動で下げました`
           : '';
       setPhase({ kind: 'done', file, images: converted, notice });
       jszipPromise.current ??= loadJsZip();
@@ -237,7 +237,7 @@ const PDFToJPEGConverter = () => {
       setPhase({ kind: 'selected', file });
     } finally {
       renderTaskRef.current = null;
-      // worker 側のドキュメントとメモリを解放する
+      // worker側のドキュメントとメモリを解放する
       if (loadingTask) {
         await loadingTask.destroy().catch(() => undefined);
       }
@@ -246,7 +246,7 @@ const PDFToJPEGConverter = () => {
 
   const cancelConversion = () => {
     cancelRef.current = true;
-    // 描画中のページがあれば中断する（RenderingCancelledException が投げられ、catch で拾う）
+    // 描画中のページがあれば中断する（RenderingCancelledExceptionが投げられ、catchで拾う）
     renderTaskRef.current?.cancel();
   };
 
@@ -254,7 +254,7 @@ const PDFToJPEGConverter = () => {
     downloadBlob(image.blob, image.filename);
   };
 
-  // 枚数にかかわらず ZIP でまとめて保存する。個別ダウンロードの連打はブラウザの
+  // 枚数にかかわらずZIPでまとめて保存する。個別ダウンロードの連打はブラウザの
   // 「複数ファイルのダウンロード」確認で2枚目以降が止まることが多い
   const handleDownloadAll = async () => {
     if (phase.kind !== 'done') return;
@@ -285,22 +285,22 @@ const PDFToJPEGConverter = () => {
     clearFileInput();
   };
 
-  // 案内文とフッターは index.html 側の静的 HTML（検索エンジンが JS なしで読めるように）。
-  // ここでは変換 UI のカードだけを描画する
+  // 案内文とフッターはindex.html側の静的HTML（検索エンジンがJSなしで読めるように）。
+  // ここでは変換UIのカードだけを描画する
   return (
     <div className="max-w-4xl mx-auto px-6 pt-6">
       <div className="bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-          PDF を JPEG 画像として保存
+          PDFをJPEG画像として保存
         </h1>
         <p className="text-gray-600 text-center mb-8">
-          PDF の各ページを JPEG 画像に変換し、1 枚ずつ、またはまとめて保存できます。
+          PDFの各ページをJPEG画像に変換し、1枚ずつ、またはまとめて保存できます。
           <br />
-          変換はお使いのブラウザの中で行われ、PDF ファイルはどこにも送信されません。
+          変換はお使いのブラウザの中で行われ、PDFファイルはどこにも送信されません。
         </p>
 
         <div className="mb-8">
-          {/* label で包むと、クリックでもキーボード（Tab → Enter/Space）でもファイル選択が開く */}
+          {/* labelで包むと、クリックでもキーボード（Tab → Enter/Space）でもファイル選択が開く */}
           <label
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -375,7 +375,7 @@ const PDFToJPEGConverter = () => {
         {phase.kind === 'selected' && (
           <button
             onClick={convertPDFToImages}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="w-full bg-blue-600 text-white py-3px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             JPEG画像に変換
           </button>
@@ -389,7 +389,7 @@ const PDFToJPEGConverter = () => {
             />
             <p className="text-gray-600 mb-4">
               {phase.total > 0
-                ? `変換中... ${phase.done} / ${phase.total} ページ`
+                ? `変換中... ${phase.done}/${phase.total}ページ`
                 : 'PDFを読み込んでいます...'}
             </p>
             {phase.total > 0 && (
@@ -409,7 +409,7 @@ const PDFToJPEGConverter = () => {
             )}
             <button
               onClick={cancelConversion}
-              className="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors"
+              className="bg-gray-200 text-gray-700 py-2px-6 rounded-lg hover:bg-gray-300 transition-colors"
             >
               キャンセル
             </button>
@@ -430,7 +430,7 @@ const PDFToJPEGConverter = () => {
               <button
                 onClick={handleDownloadAll}
                 disabled={zipping}
-                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait"
+                className="bg-green-600 text-white py-2px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait"
               >
                 <Download className="w-4 h-4" aria-hidden="true" />
                 {zipping ? 'ZIPを作成中...' : 'すべてダウンロード（ZIP）'}
@@ -449,7 +449,7 @@ const PDFToJPEGConverter = () => {
 
             <button
               onClick={resetAll}
-              className="w-full mt-6 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+              className="w-full mt-6 bg-gray-600 text-white py-2px-4 rounded-lg hover:bg-gray-700 transition-colors"
             >
               新しいPDFを変換
             </button>

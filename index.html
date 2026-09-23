@@ -27,43 +27,43 @@
     <meta name="twitter:description" content="{{APP_DESCRIPTION}}" />
     <meta name="twitter:image" content="{{SITE_URL}}og.png" />
 
-    <!-- 構造化データ（WebSite + WebApplication）。site-plugin.ts の buildJsonLd が生成する -->
+    <!-- 構造化データ（WebSite + WebApplication）。site-plugin.tsのbuildJsonLdが生成する -->
     <script type="application/ld+json">
 {{JSON_LD}}
     </script>
   </head>
   <body>
-    <!-- 変換 UI（React） -->
+    <!-- 変換UI（React） -->
     <div id="root"></div>
 
-    <!-- 使い方と仕組みの案内。検索エンジンが JS なしで読めるよう静的 HTML に置く。
-         長い区画は <details> で畳む（中身は DOM にあるので検索エンジンの評価対象。JS も CSP の変更も不要）。
+    <!-- 使い方と仕組みの案内。検索エンジンがJSなしで読めるよう静的HTMLに置く。
+         長い区画は <details> で畳む（中身はDOMにあるので検索エンジンの評価対象。JSもCSPの変更も不要）。
          「アップロードしない仕組み」は検索結果の抜粋に使われたい段落なので畳まない。
-         数値はソース（src/lib/validate-file.ts、App.tsx のスライダー定義）と揃えること -->
+         数値はソース（src/lib/validate-file.ts、App.tsxのスライダー定義）と揃えること -->
     <section id="guide" aria-labelledby="guide-heading" class="max-w-4xl mx-auto px-6 pt-6">
       <div class="bg-white rounded-lg shadow-lg p-8 text-gray-700 leading-relaxed">
         <details open class="group">
           <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex justify-between items-center gap-3 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500">
-            <h2 id="guide-heading" class="text-xl font-semibold text-gray-800">PDF を JPEG として保存する方法</h2>
+            <h2 id="guide-heading" class="text-xl font-semibold text-gray-800">PDFをJPEGとして保存する方法</h2>
             <svg class="w-5 h-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           </summary>
           <div class="mt-3">
             <ol class="list-decimal pl-6 space-y-1 mb-3">
-              <li>PDF ファイルをドラッグ＆ドロップするか、枠内をクリックして選びます。</li>
-              <li>画質（10〜100%）と解像度倍率（1〜4 倍）を選びます。そのままでも問題ありません。</li>
+              <li>PDFファイルをドラッグ＆ドロップするか、枠内をクリックして選びます。</li>
+              <li>画質（10〜100%）と解像度倍率（1〜4倍）を選びます。そのままでも問題ありません。</li>
               <li>「JPEG画像に変換」を押すと、ページごとの画像が並びます。</li>
-              <li>各画像の「保存」で 1 枚ずつ、「すべてダウンロード（ZIP）」でまとめて保存できます。</li>
+              <li>各画像の「保存」で1枚ずつ、「すべてダウンロード（ZIP）」でまとめて保存できます。</li>
             </ol>
-            <p>ファイル名は <code class="text-sm bg-gray-100 px-1 rounded">slide_001.jpg</code> のようにページ番号付きで保存されます。</p>
+            <p>ファイル名は<code class="text-sm bg-gray-100px-1 rounded">slide_001.jpg</code>のようにページ番号付きで保存されます。</p>
           </div>
         </details>
 
         <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-3">ファイルをアップロードしない仕組み</h2>
         <p class="mb-3">
-          このツールは PDF の読み込みから JPEG への変換まで、すべてをブラウザ内の JavaScript（PDF.js）で行います。通信が発生するのはツール自体のプログラムを読み込むときだけで、選んだ PDF や変換後の画像がサーバーに送られることはありません。
+          このツールはPDFの読み込みからJPEGへの変換まで、すべてをブラウザ内のJavaScript（PDF.js）で行います。通信が発生するのはツール自体のプログラムを読み込むときだけで、選んだPDFや変換後の画像がサーバーに送られることはありません。
         </p>
         <p class="mb-3">
-          社外秘の資料や個人情報を含む書類でも、手元のパソコンから外に出ることなく画像化できます。ソースコードは <a href="{{REPO_URL}}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">GitHub</a> で公開しており、動作を確認できます。
+          社外秘の資料や個人情報を含む書類でも、手元のパソコンから外に出ることなく画像化できます。ソースコードは<a href="{{REPO_URL}}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">GitHub</a>で公開しており、動作を確認できます。
         </p>
 
         <details class="group border-t border-gray-200 pt-4 mt-6">
@@ -72,40 +72,40 @@
             <svg class="w-5 h-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           </summary>
           <div class="mt-3">
-            <p class="mb-3">画質は JPEG の圧縮率で、既定は 92% です。数値を下げるとファイルが小さくなり、上げると画質が良くなります。</p>
-            <p class="mb-3">解像度倍率は、PDF のページを何倍のピクセル数で描くかです。A4 縦のページなら次の大きさになります。</p>
+            <p class="mb-3">画質はJPEGの圧縮率で、既定は92%です。数値を下げるとファイルが小さくなり、上げると画質が良くなります。</p>
+            <p class="mb-3">解像度倍率は、PDFのページを何倍のピクセル数で描くかです。A4縦のページなら次の大きさになります。</p>
             <ul class="list-disc pl-6 space-y-1 mb-3">
-              <li>1 倍: 595 × 842 px（画面で確認する用途）</li>
-              <li>2 倍: 1190 × 1684 px（既定。資料の共有やスライドの貼り付けに十分）</li>
-              <li>4 倍: 2380 × 3368 px（印刷や拡大表示向け）</li>
+              <li>1倍: 595×842px（画面で確認する用途）</li>
+              <li>2倍: 1190×1684px（既定。資料の共有やスライドの貼り付けに十分）</li>
+              <li>4倍: 2380×3368px（印刷や拡大表示向け）</li>
             </ul>
             <p>
-              倍率を上げるほど変換に時間がかかり、メモリも多く使います。ページ数の多い PDF は 2 倍までをおすすめします。A2 以上のような大きなページでは、ブラウザが扱える上限に収まるよう倍率が自動的に下がり、その旨を画面に表示します。
+              倍率を上げるほど変換に時間がかかり、メモリも多く使います。ページ数の多いPDFは2倍までをおすすめします。A2以上のような大きなページでは、ブラウザが扱える上限に収まるよう倍率が自動的に下がり、その旨を画面に表示します。
             </p>
           </div>
         </details>
 
-        <!-- FAQ は全体を 1 つの details に畳む（質問ごとに開閉させると 7 回操作が要るため） -->
+        <!-- FAQは全体を1つのdetailsに畳む（質問ごとに開閉させると7回操作が要るため） -->
         <details class="group border-t border-gray-200 pt-4 mt-6">
           <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex justify-between items-center gap-3 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500">
             <h2 class="text-xl font-semibold text-gray-800">よくある質問</h2>
             <svg class="w-5 h-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           </summary>
           <div class="mt-1">
-            <h3 class="font-semibold text-gray-800 mt-5 mb-1">パスワード付きの PDF は変換できますか？</h3>
-            <p class="mb-3">対応していません。あらかじめ保護を解除した PDF をお使いください。</p>
-            <h3 class="font-semibold text-gray-800 mt-5 mb-1">ファイルサイズやページ数の上限はありますか？</h3>
-            <p class="mb-3">ファイルサイズは 100MB までです。ページ数の制限はありませんが、変換はお使いのパソコンのメモリで行うため、ページ数が多く倍率が高い場合は時間がかかります。</p>
-            <h3 class="font-semibold text-gray-800 mt-5 mb-1">まとめて保存するとどうなりますか？</h3>
-            <p class="mb-3">「すべてダウンロード（ZIP）」を押すと、全ページの画像が 1 つの ZIP ファイル（元の PDF 名_slides.zip）にまとまります。1 枚ずつ保存したいときは、各画像の「保存」を使ってください。</p>
-            <h3 class="font-semibold text-gray-800 mt-5 mb-1">JPG と JPEG は違うものですか？</h3>
-            <p class="mb-3">同じ形式です。拡張子が .jpg か .jpeg かの違いだけで、このツールは .jpg で保存します。</p>
-            <h3 class="font-semibold text-gray-800 mt-5 mb-1">PNG で保存できますか？</h3>
-            <p class="mb-3">現在は JPEG のみです。</p>
-            <h3 class="font-semibold text-gray-800 mt-5 mb-1">スマートフォンでも使えますか？</h3>
-            <p class="mb-3">使えます。ドラッグ＆ドロップの代わりに、枠内をタップしてファイルを選んでください。</p>
             <h3 class="font-semibold text-gray-800 mt-5 mb-1">登録や料金は必要ですか？</h3>
             <p class="mb-3">不要です。無料で、透かしも入りません。</p>
+            <h3 class="font-semibold text-gray-800 mt-5 mb-1">パスワード付きのPDFは変換できますか？</h3>
+            <p class="mb-3">対応していません。あらかじめ保護を解除したPDFをお使いください。</p>
+            <h3 class="font-semibold text-gray-800 mt-5 mb-1">ファイルサイズやページ数の上限はありますか？</h3>
+            <p class="mb-3">ファイルサイズは100MBまでです。ページ数の制限はありませんが、変換はお使いのパソコンのメモリで行うため、ページ数が多く倍率が高い場合は時間がかかります。</p>
+            <h3 class="font-semibold text-gray-800 mt-5 mb-1">まとめて保存するとどうなりますか？</h3>
+            <p class="mb-3">「すべてダウンロード（ZIP）」を押すと、全ページの画像が1つのZIPファイル（元のPDF名_slides.zip）にまとまります。1枚ずつ保存したいときは、各画像の「保存」を使ってください。</p>
+            <h3 class="font-semibold text-gray-800 mt-5 mb-1">JPGとJPEGは違うものですか？</h3>
+            <p class="mb-3">同じ形式です。拡張子が.jpgか.jpegかの違いだけで、このツールは.jpgで保存します。</p>
+            <h3 class="font-semibold text-gray-800 mt-5 mb-1">PNGで保存できますか？</h3>
+            <p class="mb-3">現在はJPEGのみです。</p>
+            <h3 class="font-semibold text-gray-800 mt-5 mb-1">スマートフォンでも使えますか？</h3>
+            <p class="mb-3">使えます。ドラッグ＆ドロップの代わりに、枠内をタップしてファイルを選んでください。</p>
           </div>
         </details>
       </div>

@@ -1,6 +1,6 @@
 import { ConversionError } from '../types/errors';
 
-// 例外を利用者向けの文言に変換する。内部のメッセージは表に出さない（呼び出し側で console に残す）
+// 例外を利用者向けの文言に変換する。内部のメッセージは表に出さない（呼び出し側でconsoleに残す）
 export const describePdfError = (err: unknown): string => {
   if (err instanceof ConversionError) return err.message;
   const name = err instanceof Error ? err.name : '';
